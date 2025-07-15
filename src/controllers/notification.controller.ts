@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { CustomRequest } from '../types';
+import { getCache, setCache, deleteCache } from '../utils/redisCache';
 
 // ✅ Create Notification
 export const createNotification = async (req: CustomRequest, res: Response) => {
@@ -13,6 +14,10 @@ export const createNotification = async (req: CustomRequest, res: Response) => {
         recipientId,
       },
     });
+
+    // Invalidate Redis cache for this user
+    await deleteCache(`notifications:user:${recipientId}`);
+
     res.status(201).json(notification);
   } catch (err) {
     console.error('Create Notification Error:', err);
@@ -45,8 +50,11 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   try {
     const updated = await prisma.notification.update({
       where: { id },
-     data: { isRead: true },
+      data: { isRead: true },
     });
+
+    // Invalidate Redis cache
+    await deleteCache(`notifications:user:${updated.recipientId}`);
 
     res.json(updated);
   } catch (err) {
@@ -60,7 +68,13 @@ export const deleteNotification = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    await prisma.notification.delete({ where: { id } });
+    const deleted = await prisma.notification.delete({
+      where: { id },
+    });
+
+    // Invalidate Redis cache
+    await deleteCache(`notifications:user:${deleted.recipientId}`);
+
     res.json({ message: 'Notification deleted' });
   } catch (err) {
     console.error('Delete Notification Error:', err);
@@ -68,17 +82,30 @@ export const deleteNotification = async (req: Request, res: Response) => {
   }
 };
 
+// ✅ Get Notifications by User ID (with Redis Caching)
 export const getNotificationsByUser = async (req: Request, res: Response) => {
   const { userId } = req.params;
+
+  const cacheKey = `notifications:user:${userId}`;
+
   try {
+    // Check Redis Cache first
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json(cached);
+    }
+
     const notifications = await prisma.notification.findMany({
       where: { recipientId: userId },
       orderBy: { createdAt: 'desc' },
     });
 
+    // Save to Redis
+    await setCache(cacheKey, notifications, 3600); // cache for 1 hour
+
     res.status(200).json(notifications);
   } catch (err) {
-    console.error(err);
+    console.error('Get Notifications By User Error:', err);
     res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 };

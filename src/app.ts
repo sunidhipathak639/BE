@@ -6,6 +6,9 @@ import commentRoutes from './routes/comment.routes';
 import subtaskRoutes from './routes/subtask.routes';
 import notificationRoutes from './routes/notification.routes';
 
+import { errorHandler } from './middlewares/errorHandler';
+
+
 
 const app = express();
 
@@ -23,4 +26,5 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/subtasks', subtaskRoutes);
 
 app.use('/api/notifications', notificationRoutes)
+app.use(errorHandler);
 export default app;

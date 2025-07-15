@@ -1,8 +1,13 @@
-import Redis from 'ioredis';
+import { createClient } from 'redis';
 
-const redis = new Redis({
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 
-export default redis;
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+(async () => {
+  await redisClient.connect();
+})();
+
+export default redisClient;

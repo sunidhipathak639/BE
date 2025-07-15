@@ -1,4 +1,6 @@
 import app from './app';
+import redisClient from './config/redis';
+
 
 const PORT = process.env.PORT || 3000;
 

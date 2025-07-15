@@ -1,21 +1,17 @@
-import { Router } from 'express';
+import express from 'express';
 import {
+  getAllProjects,
   createProject,
-  getProjects,
-  getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
 } from '../controllers/project.controller';
 import { authenticate } from '../middlewares/auth';
 
-const router = Router();
+const router = express.Router();
 
-router.use(authenticate); // Protect all routes
-
-router.post('/', createProject);
-router.get('/', getProjects);
-router.get('/:id', getProjectById);
-router.put('/:id', updateProject);
-router.delete('/:id', deleteProject);
+router.get('/', authenticate, getAllProjects);
+router.post('/', authenticate, createProject);
+router.put('/:id', authenticate, updateProject);
+router.delete('/:id', authenticate, deleteProject);
 
 export default router;
