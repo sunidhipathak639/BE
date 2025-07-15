@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import prisma from "../config/db";
 import { CustomRequest } from "../types";
+import { getPaginatedTasks } from '../services/task.service';
 
 // Create Task
 export const createTask = async (req: CustomRequest, res: Response) => {
   const { title, description, status, projectId, assignedToId } = req.body;
   const createdById = req.user?.id;
-console.log(req?.user,"createdById")
+
   if (!createdById) {
     return res.status(401).json({ message: "Unauthorized: Missing user info" });
   }
@@ -30,20 +31,20 @@ console.log(req?.user,"createdById")
   }
 };
 
-// Get All Tasks
+// Get All Tasks (Paginated)
 export const getTasks = async (req: Request, res: Response) => {
   try {
-    const tasks = await prisma.task.findMany({
-      include: {
-        assignedTo: true,
-        createdBy: true,
-        project: true,
-      },
+    const { page = '1', limit = '10', search = '' } = req.query;
+
+    const result = await getPaginatedTasks({
+      page: parseInt(page as string),
+      limit: parseInt(limit as string),
+      search: search as string,
     });
-    res.status(200).json(tasks);
+
+    res.json(result);
   } catch (err) {
-    console.error("Get Tasks Error:", err);
-    res.status(500).json({ message: "Failed to fetch tasks" });
+    res.status(500).json({ message: 'Failed to fetch tasks', error: err });
   }
 };
 

@@ -45,7 +45,7 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
   try {
     const updated = await prisma.notification.update({
       where: { id },
-      data: { read: true },
+     data: { isRead: true },
     });
 
     res.json(updated);
@@ -65,5 +65,20 @@ export const deleteNotification = async (req: Request, res: Response) => {
   } catch (err) {
     console.error('Delete Notification Error:', err);
     res.status(500).json({ message: 'Failed to delete notification' });
+  }
+};
+
+export const getNotificationsByUser = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const notifications = await prisma.notification.findMany({
+      where: { recipientId: userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.status(200).json(notifications);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 };

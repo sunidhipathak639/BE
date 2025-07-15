@@ -17,6 +17,7 @@ export function authenticate(req: CustomRequest, res: Response, next: NextFuncti
       id: decoded.id,
       role: decoded.role,
     };
+    
     next();
   } catch (error) {
     console.error('Auth error:', error);

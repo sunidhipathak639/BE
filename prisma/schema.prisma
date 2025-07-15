@@ -22,19 +22,19 @@ enum TaskStatus {
 }
 
 model User {
-  id       String @id @default(uuid())
-  name     String
-  email    String @unique
-  password String
-  role     Role   @default(VIEWER)
+  id        String        @id @default(uuid())
+  name      String
+  email     String        @unique
+  password  String
+  role      Role          @default(VIEWER)
 
   // Relations
-  assignedTasks Task[]         @relation("AssignedTasks") // 👈 backref for assignedTo
-  createdTasks  Task[]         @relation("CreatedTasks") // 👈 backref for createdBy
-  comments      Comment[]      @relation("UserComments") // 👈 backref for author
-  projects      Project[]      @relation("UserProjects") // 👈 backref for Project.createdBy
-  Subtask       Subtask[]
-  Notification  Notification[]
+  assignedTasks Task[]         @relation("AssignedTasks")
+  createdTasks  Task[]         @relation("CreatedTasks")
+  comments      Comment[]      @relation("UserComments")
+  projects      Project[]      @relation("UserProjects")
+  assignedSubtasks Subtask[]  @relation("SubtaskAssignedTo")
+  notifications Notification[]
 }
 
 model Task {
@@ -45,17 +45,17 @@ model Task {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  // Foreign keys
+  // Foreign Keys
   projectId    String
   assignedToId String?
   createdById  String
 
   // Relations
-  project    Project   @relation(fields: [projectId], references: [id])
-  assignedTo User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
-  createdBy  User      @relation("CreatedTasks", fields: [createdById], references: [id])
-  comments   Comment[]
-  subtasks   Subtask[] // Add this line inside the Task model
+  project     Project   @relation(fields: [projectId], references: [id])
+  assignedTo  User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  createdBy   User      @relation("CreatedTasks", fields: [createdById], references: [id])
+  comments    Comment[]
+  subtasks    Subtask[]
 }
 
 model Project {
@@ -77,7 +77,7 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Foreign keys
+  // Foreign Keys
   taskId   String
   authorId String
 
@@ -87,28 +87,28 @@ model Comment {
 }
 
 model Subtask {
-  id        String     @id @default(uuid())
-  title     String
-  status    TaskStatus @default(PENDING)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           String     @id @default(uuid())
+  title        String
+  status       TaskStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   // Foreign Keys
   taskId       String
   assignedToId String?
 
   // Relations
-  task       Task  @relation(fields: [taskId], references: [id])
-  assignedTo User? @relation(fields: [assignedToId], references: [id])
+  task        Task  @relation(fields: [taskId], references: [id])
+  assignedTo  User? @relation("SubtaskAssignedTo", fields: [assignedToId], references: [id])
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  content   String
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  content      String
+  isRead       Boolean  @default(false)
+  recipientId  String
+  createdAt    DateTime @default(now())
 
-  // Who the notification is for
-  recipientId String
-  recipient   User   @relation(fields: [recipientId], references: [id])
+  // Relations
+  recipient    User     @relation(fields: [recipientId], references: [id])
 }
