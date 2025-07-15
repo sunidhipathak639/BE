@@ -1,14 +1,19 @@
 import express from 'express';
-import cors from 'cors';
 import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
+import projectRoutes from './routes/project.routes';
+import taskRoutes from './routes/task.routes'
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('🚀 Welcome to the API');
+});
+// below your auth routes
+app.use('/api/projects', projectRoutes);
+// Mount auth route
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/tasks', taskRoutes);
 
 export default app;
