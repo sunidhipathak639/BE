@@ -3,6 +3,7 @@ import authRoutes from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
 import taskRoutes from './routes/task.routes'
 import commentRoutes from './routes/comment.routes';
+import subtaskRoutes from './routes/subtask.routes';
 
 
 
@@ -19,4 +20,5 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/subtasks', subtaskRoutes);
 export default app;

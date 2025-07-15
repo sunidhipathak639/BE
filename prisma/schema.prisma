@@ -33,6 +33,7 @@ model User {
   createdTasks  Task[]    @relation("CreatedTasks") // 👈 backref for createdBy
   comments      Comment[] @relation("UserComments") // 👈 backref for author
   projects      Project[] @relation("UserProjects") // 👈 backref for Project.createdBy
+  Subtask       Subtask[]
 }
 
 model Task {
@@ -53,6 +54,7 @@ model Task {
   assignedTo User?     @relation("AssignedTasks", fields: [assignedToId], references: [id])
   createdBy  User      @relation("CreatedTasks", fields: [createdById], references: [id])
   comments   Comment[]
+  subtasks   Subtask[] // Add this line inside the Task model
 }
 
 model Project {
@@ -81,4 +83,20 @@ model Comment {
   // Relations
   task   Task @relation(fields: [taskId], references: [id])
   author User @relation("UserComments", fields: [authorId], references: [id])
+}
+
+model Subtask {
+  id        String     @id @default(uuid())
+  title     String
+  status    TaskStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Foreign Keys
+  taskId       String
+  assignedToId String?
+
+  // Relations
+  task       Task  @relation(fields: [taskId], references: [id])
+  assignedTo User? @relation(fields: [assignedToId], references: [id])
 }
