@@ -29,11 +29,12 @@ model User {
   role     Role   @default(VIEWER)
 
   // Relations
-  assignedTasks Task[]    @relation("AssignedTasks") // 👈 backref for assignedTo
-  createdTasks  Task[]    @relation("CreatedTasks") // 👈 backref for createdBy
-  comments      Comment[] @relation("UserComments") // 👈 backref for author
-  projects      Project[] @relation("UserProjects") // 👈 backref for Project.createdBy
+  assignedTasks Task[]         @relation("AssignedTasks") // 👈 backref for assignedTo
+  createdTasks  Task[]         @relation("CreatedTasks") // 👈 backref for createdBy
+  comments      Comment[]      @relation("UserComments") // 👈 backref for author
+  projects      Project[]      @relation("UserProjects") // 👈 backref for Project.createdBy
   Subtask       Subtask[]
+  Notification  Notification[]
 }
 
 model Task {
@@ -99,4 +100,15 @@ model Subtask {
   // Relations
   task       Task  @relation(fields: [taskId], references: [id])
   assignedTo User? @relation(fields: [assignedToId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Who the notification is for
+  recipientId String
+  recipient   User   @relation(fields: [recipientId], references: [id])
 }
