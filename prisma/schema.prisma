@@ -26,15 +26,16 @@ model User {
   name      String
   email     String        @unique
   password  String
-  role      Role          @default(VIEWER)
+  role      Role     @default(VIEWER)
+  isDeleted Boolean       @default(false)  // ✅ Soft delete
 
   // Relations
-  assignedTasks Task[]         @relation("AssignedTasks")
-  createdTasks  Task[]         @relation("CreatedTasks")
-  comments      Comment[]      @relation("UserComments")
-  projects      Project[]      @relation("UserProjects")
-  assignedSubtasks Subtask[]  @relation("SubtaskAssignedTo")
-  notifications Notification[]
+  assignedTasks     Task[]         @relation("AssignedTasks")
+  createdTasks      Task[]         @relation("CreatedTasks")
+  comments          Comment[]      @relation("UserComments")
+  projects          Project[]      @relation("UserProjects")
+  assignedSubtasks  Subtask[]      @relation("SubtaskAssignedTo")
+  notifications     Notification[]
 }
 
 model Task {

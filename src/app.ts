@@ -5,6 +5,7 @@ import taskRoutes from './routes/task.routes'
 import commentRoutes from './routes/comment.routes';
 import subtaskRoutes from './routes/subtask.routes';
 import notificationRoutes from './routes/notification.routes';
+import userRoutes from './routes/user.routes'
 
 import { errorHandler } from './middlewares/errorHandler';
 import cors from "cors";
@@ -24,6 +25,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Welcome to the API');
 });
 // below your auth routes
+app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 // Mount auth route
 app.use('/api/auth', authRoutes);

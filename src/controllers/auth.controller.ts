@@ -4,10 +4,10 @@ import bcrypt from 'bcryptjs';
 import { generateToken } from '../utils/jwt';
 
 export const register = async (req: Request, res: Response) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
 
-  if (!name || !email || !password || !role) {
-    return res.status(400).json({ message: 'All fields are required' });
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required' });
   }
 
   try {
@@ -21,16 +21,16 @@ export const register = async (req: Request, res: Response) => {
         name,
         email,
         password: hashedPassword,
-        role, // 👈 must match the enum in Prisma exactly (e.g., ADMIN, DEVELOPER, etc.)
       },
     });
 
     res.status(201).json({ message: 'User created', user });
   } catch (error: any) {
-    console.error('Register Error:', error); // 👈 Show the real error in console
+    console.error('Register Error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
