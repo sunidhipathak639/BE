@@ -126,3 +126,83 @@ export const getTasksByProject = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to fetch tasks for project" });
   }
 };
+
+// Assign Task to a User
+export const assignTaskToUser = async (req: CustomRequest, res: Response) => {
+  const { taskId } = req.params;
+  const { assignedToId } = req.body;
+  const userRole = req.user?.role;
+
+  if (!userRole || !['ADMIN', 'PROJECT_MANAGER'].includes(userRole)) {
+    return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
+  }
+
+  try {
+    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) return res.status(404).json({ message: "Task not found" });
+
+    const user = await prisma.user.findFirst({
+      where: { id: assignedToId, isDeleted: false },
+    });
+    if (!user) return res.status(404).json({ message: "User to assign not found" });
+
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: { assignedToId },
+    });
+
+    res.status(200).json({
+      message: "Task assigned successfully",
+      task: updatedTask,
+    });
+  } catch (err) {
+    console.error("Assign Task Error:", err);
+    res.status(500).json({ message: "Failed to assign task" });
+  }
+};
+
+export const getAssignedTasksPaginated = async (req: CustomRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { page = '1', limit = '10', search = '' } = req.query;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+
+    const [total, tasks] = await Promise.all([
+      prisma.task.count({
+        where: {
+          assignedToId: userId,
+          title: { contains: search as string, mode: 'insensitive' },
+        },
+      }),
+      prisma.task.findMany({
+        where: {
+          assignedToId: userId,
+          title: { contains: search as string, mode: 'insensitive' },
+        },
+        include: {
+          project: true,
+          assignedTo: true,
+          createdBy: true,
+        },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    res.status(200).json({
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPages: Math.ceil(total / limitNum),
+      data: tasks,
+    });
+  } catch (err) {
+    console.error("Get Assigned Tasks Error:", err);
+    res.status(500).json({ message: "Failed to fetch assigned tasks" });
+  }
+};

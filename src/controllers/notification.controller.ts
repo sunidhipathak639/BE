@@ -6,6 +6,7 @@ import { getCache, setCache, deleteCache } from '../utils/redisCache';
 // ✅ Create Notification
 export const createNotification = async (req: CustomRequest, res: Response) => {
   const { content, recipientId } = req.body;
+  const io = req.app.get('io'); // Accessing the Socket.io instance
 
   try {
     const notification = await prisma.notification.create({
@@ -13,6 +14,12 @@ export const createNotification = async (req: CustomRequest, res: Response) => {
         content,
         recipientId,
       },
+    });
+
+    // Emit the notification to the recipient
+    io.emit('new_notification', {
+      recipientId,
+      notification,
     });
 
     // Invalidate Redis cache for this user
@@ -25,6 +32,7 @@ export const createNotification = async (req: CustomRequest, res: Response) => {
   }
 };
 
+
 // ✅ Get All Notifications for logged-in user
 export const getNotifications = async (req: CustomRequest, res: Response) => {
   const userId = req.user?.id;
@@ -32,10 +40,14 @@ export const getNotifications = async (req: CustomRequest, res: Response) => {
   if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    // Disable caching for this route to force fetching fresh data
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
     const notifications = await prisma.notification.findMany({
       where: { recipientId: userId },
       orderBy: { createdAt: 'desc' },
     });
+
     res.json(notifications);
   } catch (err) {
     console.error('Get Notifications Error:', err);

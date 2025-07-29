@@ -3,9 +3,9 @@ import prisma from '../config/db';
 import { getCache, setCache, deleteCache } from '../utils/redisCache';
 import { CustomRequest } from '../types';
 
-// ✅ Get All Projects (with Redis caching)
 export const getAllProjects = async (req: CustomRequest, res: Response) => {
   const userId = req.user?.id;
+  const userRole = req.user?.role;
   const cacheKey = `projects:user:${userId}`;
 
   try {
@@ -14,21 +14,45 @@ export const getAllProjects = async (req: CustomRequest, res: Response) => {
       return res.status(200).json(cached);
     }
 
-    const projects = await prisma.project.findMany({
-      where: { createdById: userId },
-      include: {
-        tasks: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    let projects;
 
-    await setCache(cacheKey, projects, 3600); // cache for 1 hour
+    if (userRole === 'ADMIN' || userRole === 'PROJECT_MANAGER' || userRole === 'DEVELOPER' || userRole === 'TESTER' || userRole === 'VIEWER') {
+      // ADMIN or PROJECT_MANAGER can see all projects and tasks
+      projects = await prisma.project.findMany({
+        include: {
+          tasks: true, // Get all tasks for all projects
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } else {
+      // For non-ADMIN users, show only projects they created and tasks assigned to them or created by them
+      projects = await prisma.project.findMany({
+        where: {
+          createdById: userId, // Show only projects created by the user
+        },
+        include: {
+          tasks: {
+            where: {
+              OR: [
+                { assignedToId: userId }, // Tasks assigned to the user
+                { createdById: userId },   // Tasks created by the user
+              ],
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    await setCache(cacheKey, projects, 3600); // Cache the data for 1 hour
     res.status(200).json(projects);
   } catch (err) {
     console.error('Get All Projects Error:', err);
     res.status(500).json({ message: 'Failed to fetch projects' });
   }
 };
+
+
 
 // ✅ Create Project
 export const createProject = async (req: CustomRequest, res: Response) => {

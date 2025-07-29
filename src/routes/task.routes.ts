@@ -5,7 +5,9 @@ import {
   getTaskById,
   updateTask,
   deleteTask,
-  getTasksByProject
+  getTasksByProject,
+  assignTaskToUser,
+  getAssignedTasksPaginated
 } from '../controllers/task.controller';
 import { authenticate } from '../middlewares/auth';
 
@@ -20,5 +22,8 @@ router.delete('/:id', authenticate, deleteTask); // Delete Task
 
 // Optional: Get Tasks by Project ID
 router.get('/project/:projectId', authenticate, getTasksByProject);
+router.put("/:taskId/assign",authenticate, assignTaskToUser);
+router.get("/assigned",authenticate, getAssignedTasksPaginated);
+
 
 export default router;
