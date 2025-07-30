@@ -2,13 +2,13 @@ import { Request, Response } from 'express';
 import prisma from '../config/db';
 import { CustomRequest } from '../types';
 import { getCache, setCache, deleteCache } from '../utils/redisCache';
-
 // ✅ Create Notification
 export const createNotification = async (req: CustomRequest, res: Response) => {
-  const { content, recipientId } = req.body;
+  const { content, recipientId } = req.body; // Extract content and recipientId from the request body
   const io = req.app.get('io'); // Accessing the Socket.io instance
 
   try {
+    // Create the notification in the database
     const notification = await prisma.notification.create({
       data: {
         content,
@@ -16,7 +16,7 @@ export const createNotification = async (req: CustomRequest, res: Response) => {
       },
     });
 
-    // Emit the notification to the recipient
+    // Emit the notification to the recipient via Socket.io
     io.emit('new_notification', {
       recipientId,
       notification,

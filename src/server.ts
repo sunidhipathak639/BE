@@ -8,7 +8,7 @@ const server = http.createServer(app);
 // Initialize Socket.io with the server
 const io = new socketIo.Server(server, {
   cors: {
-    origin: '*', // Allow all origins, modify this in production for security
+    origin: 'http://localhost:5173',  // Frontend URL
     methods: ['GET', 'POST'],
   },
 });
@@ -30,6 +30,7 @@ io.on('connection', (socket) => {
   //   console.log(data);
   // });
 });
+app.set('io', io);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
