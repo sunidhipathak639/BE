@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/auth';
 import { authorizeRoles } from '../middlewares/role';
-import { getAllUsers, deleteUser, updateUser } from '../controllers/user.controller';
+import {
+  getAllUsers,
+  updateUser,
+  deleteUser,
+} from '../controllers/user.controller';
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get('/', authenticate, getAllUsers);
-router.patch('/:id', authenticate, updateUser);
-router.delete('/:id', authenticate, deleteUser);
+router.get('/', authenticate, getAllUsers); // Only Admin can get all users
+router.patch('/:id', authorizeRoles('ADMIN'), updateUser); // Only Admin can update user
+router.delete('/:id', authorizeRoles('ADMIN'), deleteUser); // Only Admin can delete user
 
 export default router;

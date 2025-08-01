@@ -11,9 +11,45 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
+    // Check if there's any user in the database
+    const existingUser = await prisma.user.findFirst();
+
+    // If no users exist, create an Admin user
+    if (!existingUser) {
+      const adminPassword = 'password'; // Default password for admin
+      const hashedPassword = await bcrypt.hash(adminPassword, 10); // Hash the password
+
+      const adminUser = await prisma.user.create({
+        data: {
+          name: 'Admin',
+          email: 'admin@sunidhi.com', // Admin email
+          password: hashedPassword,
+          role: 'ADMIN', // Set role to Admin
+        },
+      });
+
+      return res.status(201).json({
+        message: 'Admin user created successfully.',
+        user: { id: adminUser.id, name: adminUser.name, email: adminUser.email, role: adminUser.role },
+      });
+    }
+
+    // If the admin user already exists, ensure they have the 'ADMIN' role
+    const adminUser = await prisma.user.findUnique({ where: { email: 'admin@sunidhi.com' } });
+
+    if (adminUser && adminUser.role !== 'ADMIN') {
+      // If the role is not ADMIN, update the role to ADMIN
+      await prisma.user.update({
+        where: { email: 'admin@sunidhi.com' },
+        data: { role: 'ADMIN' },
+      });
+    }
+
+    // If user exists, check if regular user already exists
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: 'User already exists' });
 
+    // Proceed with regular user registration
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
@@ -30,8 +66,6 @@ export const register = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
